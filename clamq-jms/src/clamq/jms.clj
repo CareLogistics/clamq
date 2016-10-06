@@ -43,6 +43,7 @@
                                       limit 0 
                                       failure-fn helpers/rethrow-on-failure 
                                       convert-with-headers false}}]
+  (println (type connection))
   (macros/validate connection "No value specified for connection!")
   (macros/validate endpoint "No value specified for :endpoint!")
   (macros/validate transacted "No value specified for :transacted!")
@@ -59,7 +60,7 @@
       (.setConcurrentConsumers 1))
     (reify consumer/Consumer
       (start [self] (do (doto container (.start) (.initialize)) nil))
-      (close [self] (do (.shutdown container) nil)))))
+      (close [self] (do (.shutdown container) (.destroy connection) nil)))))
 
 (defn- jms-seqable-consumer [connection {:keys [endpoint timeout] :or {timeout 0}}]
   (macros/validate connection "No value specified for connection!")
