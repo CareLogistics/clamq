@@ -1,8 +1,8 @@
 (ns clamq.converters
-  (:require [camel-snake-kebab.core :refer [->PascalCase]])
+  (:require [camel-snake-kebab.core :refer [->PascalCase ->kebab-case]])
   (:import [org.springframework.jms.support.converter MessageConverter SimpleMessageConverter]
            [org.springframework.jms.core JmsTemplate MessageCreator] 
-           [javax.jms Session TextMessage DeliveryMode]))
+           [javax.jms Session TextMessage DeliveryMode]) )
 
 (defn- jms-message->headers [jms-message]
   {:correlation-id (.getJMSCorrelationID jms-message)
@@ -34,7 +34,7 @@
 (defn- jms-message->properties [jms-message]
   (when-let [properties (.getProperties jms-message)]
     (zipmap
-     (map #(keyword %) (keys properties))
+     (map (comp keyword ->kebab-case) (keys properties))
      (vals properties))))
 
 (defn- properties->jms-message [jms-message properties {:keys [key-fn]
@@ -50,7 +50,7 @@
       (let [body (.fromMessage (SimpleMessageConverter.) message)
 	    hdrs (jms-message->headers message)
 	    props (jms-message->properties message)]
-	{:headers (merge hdrs props) :body body}))
+	{:headers (assoc hdrs :properties props) :body body}))
 
     (toMessage [this message session]
       (.toMessage (SimpleMessageConverter.) message session))))
